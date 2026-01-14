@@ -47,6 +47,8 @@ export function listLoginMethods() {
     }));
 
   // If header authentication is configured and password exists, include header as a method
+  // Header auth requires a password entry because it uses the same password validation
+  // mechanism - the password just comes from the x-actual-password header instead of the request body
   const headerConfigured = isHeaderAuthConfigured();
   const passwordExists = rows.some(r => r.method === 'password');
 
