@@ -27,7 +27,7 @@ export function needsBootstrap() {
 export function listLoginMethods() {
   const accountDb = getAccountDb();
   const rows = accountDb.all('SELECT method, display_name, active FROM auth');
-  return rows
+  let methods = rows
     .filter(f =>
       rows.length > 1 && config.get('enforceOpenId')
         ? f.method === 'openid'
@@ -38,6 +38,26 @@ export function listLoginMethods() {
       active: r.active,
       displayName: r.display_name,
     }));
+
+  // If header authentication is configured and password exists, include header as a method
+  const headerConfigured =
+    config.get('loginMethod') === 'header' &&
+    config.get('allowedLoginMethods').includes('header');
+  const passwordExists = rows.some(r => r.method === 'password');
+
+  if (headerConfigured && passwordExists) {
+    // Remove password from the list if header is configured (since header replaces password UI)
+    methods = methods.filter(m => m.method !== 'password');
+
+    // Add header method
+    methods.push({
+      method: 'header',
+      active: true,
+      displayName: 'Header',
+    });
+  }
+
+  return methods;
 }
 
 export function getActiveLoginMethod() {
