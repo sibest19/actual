@@ -24,6 +24,13 @@ export function needsBootstrap() {
   return rows.length === 0;
 }
 
+function isHeaderAuthConfigured() {
+  return (
+    config.get('loginMethod') === 'header' &&
+    config.get('allowedLoginMethods').includes('header')
+  );
+}
+
 export function listLoginMethods() {
   const accountDb = getAccountDb();
   const rows = accountDb.all('SELECT method, display_name, active FROM auth');
@@ -40,9 +47,7 @@ export function listLoginMethods() {
     }));
 
   // If header authentication is configured and password exists, include header as a method
-  const headerConfigured =
-    config.get('loginMethod') === 'header' &&
-    config.get('allowedLoginMethods').includes('header');
+  const headerConfigured = isHeaderAuthConfigured();
   const passwordExists = rows.some(r => r.method === 'password');
 
   if (headerConfigured && passwordExists) {
@@ -83,10 +88,7 @@ export function getLoginMethod(req) {
   }
 
   //BY-PASS ANY OTHER CONFIGURATION TO ENSURE HEADER AUTH
-  if (
-    config.get('loginMethod') === 'header' &&
-    config.get('allowedLoginMethods').includes('header')
-  ) {
+  if (isHeaderAuthConfigured()) {
     return config.get('loginMethod');
   }
 
